@@ -6,6 +6,7 @@ struct ContentView: View {
     
     @State private var targetHost: String = "192.168.4.1"
     @State private var streamRate: Int = 20
+    @Environment(\.scenePhase) private var scenePhase
     
     private let availableRates = [10, 20, 50]
     
@@ -100,11 +101,22 @@ struct ContentView: View {
             .padding(.top)
             .navigationTitle("Gimbal Gyro Streamer")
             .navigationBarTitleDisplayMode(.inline)
+            .onChange(of: scenePhase) { newPhase in
+                if newPhase == .background || newPhase == .inactive {
+                    if webSocketManager.connectionState != .disconnected {
+                        disconnect()
+                    }
+                }
+            }
         }
     }
     
     private func connect() {
-        let url = URL(string: "ws://\(targetHost)/ws")!
+        guard let url = validateAndCreateURL(from: targetHost) else {
+            webSocketManager.lastError = "Invalid host address"
+            return
+        }
+        
         webSocketManager.connect(to: url)
         gyroService.startStreaming(rate: streamRate, webSocketManager: webSocketManager)
     }
@@ -112,6 +124,17 @@ struct ContentView: View {
     private func disconnect() {
         gyroService.stopStreaming()
         webSocketManager.disconnect()
+    }
+    
+    private func validateAndCreateURL(from host: String) -> URL? {
+        let trimmedHost = host.trimmingCharacters(in: .whitespaces)
+        
+        if trimmedHost.isEmpty {
+            return nil
+        }
+        
+        let urlString = "ws://\(trimmedHost)/ws"
+        return URL(string: urlString)
     }
 }
 

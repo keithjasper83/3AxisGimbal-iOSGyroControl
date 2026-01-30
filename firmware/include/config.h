@@ -2,8 +2,9 @@
 #define CONFIG_H
 
 // WiFi Configuration (ESP32 as Access Point)
+// NOTE: Change these credentials before deploying to production!
 #define WIFI_SSID "Gimbal-AP"
-#define WIFI_PASSWORD "gimbal123"
+#define WIFI_PASSWORD "G1mb@l$ecur3_2026"  // Use a strong password in production
 
 // Phone Gyro Control Gains
 // These multiply the incoming phone gyro rates (rad/s) to control gimbal speed

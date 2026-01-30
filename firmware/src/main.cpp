@@ -103,10 +103,14 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
     
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-        data[len] = 0;
+        // Safely create null-terminated string without buffer overflow
+        char buffer[256];
+        size_t copyLen = min(len, sizeof(buffer) - 1);
+        memcpy(buffer, data, copyLen);
+        buffer[copyLen] = 0;
         
         StaticJsonDocument<256> doc;
-        DeserializationError error = deserializeJson(doc, (char*)data);
+        DeserializationError error = deserializeJson(doc, buffer);
         
         if (error) {
             Serial.print("JSON parse error: ");
@@ -116,8 +120,19 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         
         const char* cmd = doc["cmd"];
         
+        // Validate cmd is not null
+        if (cmd == nullptr) {
+            Serial.println("Error: Missing 'cmd' field in JSON");
+            return;
+        }
+        
         if (strcmp(cmd, "setMode") == 0) {
             int mode = doc["mode"];
+            // Validate mode value
+            if (mode != MODE_MANUAL && mode != MODE_AUTO) {
+                Serial.printf("Error: Invalid mode value: %d\n", mode);
+                return;
+            }
             setMode((ControlMode)mode);
             Serial.printf("Mode set to: %s\n", mode == MODE_MANUAL ? "MANUAL" : "AUTO");
         }
@@ -158,7 +173,8 @@ void processPhoneGyro() {
 }
 
 void checkGyroTimeout() {
-    if (millis() - lastPhoneGyroTime > PHONE_GYRO_TIMEOUT_MS) {
+    // Only check timeout if we have received at least one gyro packet
+    if (lastPhoneGyroTime > 0 && millis() - lastPhoneGyroTime > PHONE_GYRO_TIMEOUT_MS) {
         Serial.println("Phone gyro timeout - returning to AUTO mode");
         setMode(MODE_AUTO);
     }

@@ -53,8 +53,8 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
     }
     
     func sendMessage(_ message: String) {
-        let message = URLSessionWebSocketTask.Message.string(message)
-        webSocketTask?.send(message) { [weak self] error in
+        let wsMessage = URLSessionWebSocketTask.Message.string(message)
+        webSocketTask?.send(wsMessage) { [weak self] error in
             if let error = error {
                 DispatchQueue.main.async {
                     self?.lastError = "Send error: \(error.localizedDescription)"
@@ -65,10 +65,14 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
     
     func sendModeCommand(mode: Int) {
         let json = ["cmd": "setMode", "mode": mode] as [String : Any]
-        if let jsonData = try? JSONSerialization.data(withJSONObject: json),
-           let jsonString = String(data: jsonData, encoding: .utf8) {
-            sendMessage(jsonString)
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: json),
+              let jsonString = String(data: jsonData, encoding: .utf8) else {
+            DispatchQueue.main.async {
+                self.lastError = "Failed to create mode command"
+            }
+            return
         }
+        sendMessage(jsonString)
     }
     
     private func receiveMessage() {

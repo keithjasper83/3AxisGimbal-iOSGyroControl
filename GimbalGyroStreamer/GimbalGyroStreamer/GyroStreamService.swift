@@ -28,15 +28,21 @@ class GyroStreamService: ObservableObject {
         packetCount = 0
         
         // Configure motion manager
-        motionManager.gyroUpdateInterval = 1.0 / Double(rate)
+        // Set update interval slightly faster than streaming rate for fresh data
+        motionManager.gyroUpdateInterval = 0.9 / Double(rate)
         
         // Start gyro updates
         motionManager.startGyroUpdates()
         
-        // Start streaming timer
+        // Start streaming timer on main RunLoop
         let interval = 1.0 / Double(rate)
         streamTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.sendGyroData()
+        }
+        
+        // Ensure timer runs on main RunLoop
+        if let timer = streamTimer {
+            RunLoop.main.add(timer, forMode: .common)
         }
     }
     
@@ -48,16 +54,13 @@ class GyroStreamService: ObservableObject {
     }
     
     private func sendGyroData() {
-        guard let gyroData = motionManager.gyroData else { return }
+        guard let gyroData = motionManager.gyroData else {
+            // Don't increment counter if no data available
+            return
+        }
         
         let rotationRate = gyroData.rotationRate
         let data = GyroData(gx: rotationRate.x, gy: rotationRate.y, gz: rotationRate.z)
-        
-        // Update UI
-        DispatchQueue.main.async {
-            self.lastGyroData = data
-            self.packetCount += 1
-        }
         
         // Send to WebSocket
         let json: [String: Any] = [
@@ -67,9 +70,18 @@ class GyroStreamService: ObservableObject {
             "gz": data.gz
         ]
         
-        if let jsonData = try? JSONSerialization.data(withJSONObject: json),
-           let jsonString = String(data: jsonData, encoding: .utf8) {
-            webSocketManager?.sendMessage(jsonString)
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: json),
+              let jsonString = String(data: jsonData, encoding: .utf8) else {
+            print("Failed to serialize gyro data to JSON")
+            return
+        }
+        
+        webSocketManager?.sendMessage(jsonString)
+        
+        // Only increment counter after successful send
+        DispatchQueue.main.async {
+            self.lastGyroData = data
+            self.packetCount += 1
         }
     }
 }

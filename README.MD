@@ -83,7 +83,7 @@ Stream phone gyroscope data to ESP32 gimbal controller via WebSocket at configur
    Edit `firmware/include/config.h`:
    ```cpp
    #define WIFI_SSID "Gimbal-AP"
-   #define WIFI_PASSWORD "gimbal123"
+   #define WIFI_PASSWORD "G1mb@l$ecur3_2026"  // Change to your own secure password
    ```
 
 4. **Tune Gains** (optional):
@@ -113,7 +113,7 @@ Stream phone gyroscope data to ESP32 gimbal controller via WebSocket at configur
 
 1. **Power on ESP32**: It will create a WiFi Access Point
    - SSID: `Gimbal-AP`
-   - Password: `gimbal123`
+   - Password: `G1mb@l$ecur3_2026` (default - should be changed)
    - IP: `192.168.4.1`
 
 2. **Connect iPhone to WiFi**: Join the `Gimbal-AP` network
