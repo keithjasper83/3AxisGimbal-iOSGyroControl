@@ -1,10 +1,9 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var webSocketManager = WebSocketManager()
+    @StateObject private var bleManager = BLEManager()
     @StateObject private var gyroService = GyroStreamService()
     
-    @State private var targetHost: String = "192.168.4.1"
     @State private var streamRate: Int = 20
     @Environment(\.scenePhase) private var scenePhase
     
@@ -14,18 +13,23 @@ struct ContentView: View {
         NavigationView {
             VStack(spacing: 20) {
                 // Connection Status
-                StatusPillView(status: webSocketManager.connectionState)
+                StatusPillView(status: bleManager.connectionState)
                 
-                // Target Host Input
+                // Device Info Card
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Target Host")
+                    Text("Target Gimbal")
                         .font(.headline)
-                    TextField("IP Address", text: $targetHost)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.decimalPad)
-                        .autocapitalization(.none)
-                        .disabled(webSocketManager.connectionState != .disconnected)
+                    Text("Device Name: Gimbal-ESP32")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text("Service UUID: 19B10000-E8F2-537E...")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(10)
                 .padding(.horizontal)
                 
                 // Stream Rate Picker
@@ -38,28 +42,40 @@ struct ContentView: View {
                         }
                     }
                     .pickerStyle(SegmentedPickerStyle())
-                    .disabled(webSocketManager.connectionState != .disconnected)
+                    .disabled(bleManager.connectionState != .disconnected)
                 }
                 .padding(.horizontal)
                 
-                // Connect/Disconnect Button
+                // Connect/Disconnect/Scan Button
                 Button(action: {
-                    if webSocketManager.connectionState == .disconnected {
-                        connect()
-                    } else {
-                        disconnect()
-                    }
+                    handleActionButton()
                 }) {
-                    Text(webSocketManager.connectionState == .disconnected ? "Connect" : "Disconnect")
+                    Text(buttonText)
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(webSocketManager.connectionState == .disconnected ? Color.blue : Color.red)
+                        .background(buttonColor)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal)
-                .disabled(webSocketManager.connectionState == .connecting)
+                .disabled(bleManager.connectionState == .connecting)
+                
+                // Gimbal Status (from TX Status Characteristic)
+                if bleManager.connectionState == .connected {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Gimbal Status Feed")
+                            .font(.headline)
+                        Text(bleManager.statusMessage)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.blue)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    .padding(.horizontal)
+                }
                 
                 // Statistics
                 VStack(spacing: 12) {
@@ -85,7 +101,7 @@ struct ContentView: View {
                 .padding(.horizontal)
                 
                 // Error Display
-                if let error = webSocketManager.lastError {
+                if let error = bleManager.lastError {
                     Text("Error: \(error)")
                         .font(.caption)
                         .foregroundColor(.red)
@@ -103,43 +119,71 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .onChange(of: scenePhase) { newPhase in
                 if newPhase == .background || newPhase == .inactive {
-                    if webSocketManager.connectionState != .disconnected {
+                    if bleManager.connectionState != .disconnected {
                         disconnect()
                     }
+                }
+            }
+            .onChange(of: bleManager.connectionState) { newState in
+                if newState == .connected {
+                    gyroService.startStreaming(rate: streamRate, bleManager: bleManager)
+                } else if newState == .disconnected {
+                    gyroService.stopStreaming()
                 }
             }
         }
     }
     
-    private func connect() {
-        guard let url = validateAndCreateURL(from: targetHost) else {
-            webSocketManager.lastError = "Invalid host address"
-            return
+    private var buttonText: String {
+        switch bleManager.connectionState {
+        case .disconnected:
+            return "Connect"
+        case .scanning:
+            return "Scanning... Tap to Stop"
+        case .connecting:
+            return "Connecting..."
+        case .connected:
+            return "Disconnect"
         }
-        
-        webSocketManager.connect(to: url)
-        gyroService.startStreaming(rate: streamRate, webSocketManager: webSocketManager)
+    }
+    
+    private var buttonColor: Color {
+        switch bleManager.connectionState {
+        case .disconnected:
+            return .blue
+        case .scanning:
+            return .orange
+        case .connecting:
+            return .gray
+        case .connected:
+            return .red
+        }
+    }
+    
+    private func handleActionButton() {
+        switch bleManager.connectionState {
+        case .disconnected:
+            connect()
+        case .scanning:
+            bleManager.stopScanning()
+        case .connecting:
+            break
+        case .connected:
+            disconnect()
+        }
+    }
+    
+    private func connect() {
+        bleManager.startScanning()
     }
     
     private func disconnect() {
-        gyroService.stopStreaming()
-        webSocketManager.disconnect()
-    }
-    
-    private func validateAndCreateURL(from host: String) -> URL? {
-        let trimmedHost = host.trimmingCharacters(in: .whitespaces)
-        
-        if trimmedHost.isEmpty {
-            return nil
-        }
-        
-        let urlString = "ws://\(trimmedHost)/ws"
-        return URL(string: urlString)
+        bleManager.disconnect()
     }
 }
 
 struct StatusPillView: View {
-    let status: ConnectionState
+    let status: BLEConnectionState
     
     var body: some View {
         HStack {
@@ -159,6 +203,8 @@ struct StatusPillView: View {
         switch status {
         case .disconnected:
             return "Disconnected"
+        case .scanning:
+            return "Scanning"
         case .connecting:
             return "Connecting"
         case .connected:
@@ -170,6 +216,8 @@ struct StatusPillView: View {
         switch status {
         case .disconnected:
             return .gray
+        case .scanning:
+            return .blue
         case .connecting:
             return .orange
         case .connected:

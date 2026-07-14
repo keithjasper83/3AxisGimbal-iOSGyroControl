@@ -14,10 +14,10 @@ class GyroStreamService: ObservableObject {
     
     private let motionManager = CMMotionManager()
     private var streamTimer: Timer?
-    private weak var webSocketManager: WebSocketManager?
+    private weak var bleManager: BLEManager?
     
-    func startStreaming(rate: Int, webSocketManager: WebSocketManager) {
-        self.webSocketManager = webSocketManager
+    func startStreaming(rate: Int, bleManager: BLEManager) {
+        self.bleManager = bleManager
         
         guard motionManager.isGyroAvailable else {
             print("Gyroscope not available")
@@ -50,7 +50,7 @@ class GyroStreamService: ObservableObject {
         streamTimer?.invalidate()
         streamTimer = nil
         motionManager.stopGyroUpdates()
-        webSocketManager = nil
+        bleManager = nil
     }
     
     private func sendGyroData() {
@@ -62,7 +62,7 @@ class GyroStreamService: ObservableObject {
         let rotationRate = gyroData.rotationRate
         let data = GyroData(gx: rotationRate.x, gy: rotationRate.y, gz: rotationRate.z)
         
-        // Send to WebSocket
+        // Send to BLE
         let json: [String: Any] = [
             "cmd": "setPhoneGyro",
             "gx": data.gx,
@@ -76,7 +76,7 @@ class GyroStreamService: ObservableObject {
             return
         }
         
-        webSocketManager?.sendMessage(jsonString)
+        bleManager?.sendCommand(jsonString)
         
         // Only increment counter after successful send
         DispatchQueue.main.async {

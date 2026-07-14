@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		A1000001000000000000001 /* GimbalGyroStreamerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002000000000000001 /* GimbalGyroStreamerApp.swift */; };
 		A1000003000000000000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004000000000000001 /* ContentView.swift */; };
-		A1000005000000000000001 /* WebSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006000000000000001 /* WebSocketManager.swift */; };
+		A1000005000000000000001 /* BLEManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006000000000000001 /* BLEManager.swift */; };
 		A1000007000000000000001 /* GyroStreamService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008000000000000001 /* GyroStreamService.swift */; };
 		A1000009000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A100000A000000000000001 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -17,7 +17,7 @@
 /* Begin PBXFileReference section */
 		A1000002000000000000001 /* GimbalGyroStreamerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GimbalGyroStreamerApp.swift; sourceTree = "<group>"; };
 		A1000004000000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		A1000006000000000000001 /* WebSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketManager.swift; sourceTree = "<group>"; };
+		A1000006000000000000001 /* BLEManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEManager.swift; sourceTree = "<group>"; };
 		A1000008000000000000001 /* GyroStreamService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GyroStreamService.swift; sourceTree = "<group>"; };
 		A100000A000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A100000B000000000000001 /* GimbalGyroStreamer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GimbalGyroStreamer.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -48,7 +48,7 @@
 			children = (
 				A1000002000000000000001 /* GimbalGyroStreamerApp.swift */,
 				A1000004000000000000001 /* ContentView.swift */,
-				A1000006000000000000001 /* WebSocketManager.swift */,
+				A1000006000000000000001 /* BLEManager.swift */,
 				A1000008000000000000001 /* GyroStreamService.swift */,
 				A100000A000000000000001 /* Assets.xcassets */,
 				A100000C000000000000001 /* Info.plist */,
@@ -134,7 +134,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000003000000000000001 /* ContentView.swift in Sources */,
-				A1000005000000000000001 /* WebSocketManager.swift in Sources */,
+				A1000005000000000000001 /* BLEManager.swift in Sources */,
 				A1000007000000000000001 /* GyroStreamService.swift in Sources */,
 				A1000001000000000000001 /* GimbalGyroStreamerApp.swift in Sources */,
 			);
