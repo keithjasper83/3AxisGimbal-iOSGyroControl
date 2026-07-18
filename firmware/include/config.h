@@ -1,27 +1,30 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// WiFi Configuration (ESP32 as Access Point)
-// NOTE: Change these credentials before deploying to production!
-#define WIFI_SSID "Gimbal-AP"
-#define WIFI_PASSWORD "G1mb@l$ecur3_2026"  // Use a strong password in production
+// BLE Configuration
+#define BLE_DEVICE_NAME "Gimbal-ESP32"
+#define BLE_SERVICE_UUID        "19B10000-E8F2-537E-4F6C-D104768A1214"
+#define BLE_RX_CHAR_UUID        "19B10001-E8F2-537E-4F6C-D104768A1214"
+#define BLE_TX_CHAR_UUID        "19B10002-E8F2-537E-4F6C-D104768A1214"
 
-// Phone Gyro Control Gains
-// These multiply the incoming phone gyro rates (rad/s) to control gimbal speed
-#define PHONE_GYRO_GAIN_X 1.0f    // Pitch axis gain
-#define PHONE_GYRO_GAIN_Y 1.0f    // Roll axis gain
-#define PHONE_GYRO_GAIN_Z 1.0f    // Yaw axis gain
+// Gyro Control gain
+#define GYRO_GAIN 20.0f
 
-// Phone Gyro Deadband (rad/s)
-// Gyro rates below this threshold are ignored to reduce noise/drift
-#define PHONE_GYRO_DEADBAND_RAD_S 0.01f
+// Axis clamp values (degrees)
+#define AXIS_MIN -180.0f
+#define AXIS_MAX 180.0f
 
-// Phone Gyro Timeout (milliseconds)
-// If no gyro data received within this time, automatically return to AUTO mode
-#define PHONE_GYRO_TIMEOUT_MS 1000
+// Servo pulse mapping (microseconds)
+#define SERVO_MIN_PULSE_US 500
+#define SERVO_MAX_PULSE_US 2500
 
-// WebSocket Configuration
-#define WS_PORT 80
-#define WS_PATH "/ws"
+// Stabilization blend factor (0.0 to 1.0)
+// 0.0 = manual-only behavior
+// 1.0 = full leveling assist
+#define DEFAULT_STAB_BLEND 0.5f
+
+// Mock MPU6050 Leveling correction values (for testing purposes)
+#define MOCK_MPU_CORRECTION_PITCH 10.0f
+#define MOCK_MPU_CORRECTION_ROLL -5.0f
 
 #endif // CONFIG_H
